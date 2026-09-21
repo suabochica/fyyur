@@ -1,0 +1,26 @@
+[project]
+name = "fyyur"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Sergio Benítez", email = "sergio.kun21@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "flask>=3.0",
+    "flask-moment>=1.0",
+    "flask-migrate>=4.1",
+    "flask-sqlalchemy>=3.1",
+    "flask-wtf>=1.2",
+    "python-dateutil>=2.9",
+    "babel>=2.16",
+    "wtforms>=3.1",
+    "psycopg[binary]>=3.2",
+]
+
+[project.scripts]
+fyyur = "fyyur:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
