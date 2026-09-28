@@ -2,8 +2,6 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from datetime import datetime
-
 import dateutil.parser
 import babel
 import logging
@@ -44,83 +42,6 @@ def format_datetime(value, format='medium'):
 app.jinja_env.filters['datetime'] = format_datetime
 
 #----------------------------------------------------------------------------#
-# Helper functions.
-#----------------------------------------------------------------------------#
-
-def format_venue_shows(venue_id):
-    now = datetime.now()
-
-    upcoming_shows = (
-        db.session.query(Show, Artist)
-        .join(Artist, Show.artist_id == Artist.id)
-        .filter(Show.venue_id == venue_id, Show.date > now)
-        .order_by(Show.date.asc())
-        .all()
-    )
-
-    past_shows = (
-        db.session.query(Show, Artist)
-        .join(Artist, Show.artist_id == Artist.id)
-        .filter(Show.venue_id == venue_id, Show.date <= now)
-        .order_by(Show.date.desc())
-        .all()
-    )
-
-    return {
-        'upcoming_shows': [{
-            'artist_id': artist.id,
-            'artist_name': artist.name,
-            'artist_image_link': artist.image_link,
-            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-        } for show, artist in upcoming_shows],
-        'past_shows': [{
-            'artist_id': artist.id,
-            'artist_name': artist.name,
-            'artist_image_link': artist.image_link,
-            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-        } for show, artist in past_shows],
-        'upcoming_shows_count': len(upcoming_shows),
-        'past_shows_count': len(past_shows),
-    }
-
-
-def format_artist_shows(artist_id):
-    now = datetime.now()
-
-    upcoming_shows = (
-        db.session.query(Show, Venue)
-        .join(Venue, Show.venue_id == Venue.id)
-        .filter(Show.artist_id == artist_id, Show.date > now)
-        .order_by(Show.date.asc())
-        .all()
-    )
-
-    past_shows = (
-        db.session.query(Show, Venue)
-        .join(Venue, Show.venue_id == Venue.id)
-        .filter(Show.artist_id == artist_id, Show.date <= now)
-        .order_by(Show.date.desc())
-        .all()
-    )
-
-    return {
-        'upcoming_shows': [{
-            'venue_id': venue.id,
-            'venue_name': venue.name,
-            'venue_image_link': venue.image_link,
-            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-        } for show, venue in upcoming_shows],
-        'past_shows': [{
-            'venue_id': venue.id,
-            'venue_name': venue.name,
-            'venue_image_link': venue.image_link,
-            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-        } for show, venue in past_shows],
-        'upcoming_shows_count': len(upcoming_shows),
-        'past_shows_count': len(past_shows),
-    }
-
-#----------------------------------------------------------------------------#
 # Routes.
 #----------------------------------------------------------------------------#
 
@@ -132,7 +53,6 @@ def index():
 @app.route('/venues')
 def list_venues():
     venues = Venue.query.order_by(Venue.city, Venue.state, Venue.name).all()
-    now = datetime.now()
 
     areas = []
     area_map = {}
@@ -147,13 +67,10 @@ def list_venues():
             }
             area_map[key] = area_item
             areas.append(area_item)
-        upcoming_count = Show.query.filter(
-            Show.venue_id == venue.id, Show.date > now
-        ).count()
         area_map[key]['venues'].append({
             'id': venue.id,
             'name': venue.name,
-            'num_upcoming_shows': upcoming_count,
+            'num_upcoming_shows': venue.upcoming_shows_count(),
         })
 
     return render_template('pages/venues.html', areas=areas)
@@ -166,13 +83,10 @@ def search_venues():
         Venue.name.ilike(f'%{search_term}%')
     ).order_by(Venue.name).all()
 
-    now = datetime.now()
     data = [{
         'id': v.id,
         'name': v.name,
-        'num_upcoming_shows': Show.query.filter(
-            Show.venue_id == v.id, Show.date > now
-        ).count(),
+        'num_upcoming_shows': v.upcoming_shows_count(),
     } for v in venues]
 
     return render_template(
@@ -185,7 +99,7 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     venue = Venue.query.get_or_404(venue_id)
-    shows_data = format_venue_shows(venue_id)
+    shows_data = venue.format_shows()
 
     return render_template('pages/show_venue.html', venue={
         'id': venue.id,
@@ -198,8 +112,8 @@ def show_venue(venue_id):
         'website': venue.website,
         'facebook_link': venue.facebook_link,
         'image_link': venue.image_link,
-        'seeking_talent': getattr(venue, 'seeking_talent', False),
-        'seeking_description': getattr(venue, 'seeking_description', ''),
+        'seeking_talent': venue.seeking_talent,
+        'seeking_description': venue.seeking_description,
         **shows_data,
     })
 
@@ -310,13 +224,10 @@ def search_artists():
         Artist.name.ilike(f'%{search_term}%')
     ).order_by(Artist.name).all()
 
-    now = datetime.now()
     data = [{
         'id': a.id,
         'name': a.name,
-        'num_upcoming_shows': Show.query.filter(
-            Show.artist_id == a.id, Show.date > now
-        ).count(),
+        'num_upcoming_shows': a.upcoming_shows_count(),
     } for a in artists]
 
     return render_template(
@@ -329,7 +240,7 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
     artist = Artist.query.get_or_404(artist_id)
-    shows_data = format_artist_shows(artist_id)
+    shows_data = artist.format_shows()
 
     return render_template('pages/show_artist.html', artist={
         'id': artist.id,
@@ -341,8 +252,8 @@ def show_artist(artist_id):
         'website': artist.website,
         'facebook_link': artist.facebook_link,
         'image_link': artist.image_link,
-        'seeking_venue': getattr(artist, 'seeking_venue', False),
-        'seeking_description': getattr(artist, 'seeking_description', ''),
+        'seeking_venue': artist.seeking_venue,
+        'seeking_description': artist.seeking_description,
         **shows_data,
     })
 
@@ -428,13 +339,7 @@ def edit_artist_submission(artist_id):
 
 @app.route('/shows')
 def list_shows():
-    shows = (
-        db.session.query(Show, Artist, Venue)
-        .join(Artist)
-        .join(Venue)
-        .order_by(Show.date.desc())
-        .all()
-    )
+    shows = Show.get_all_with_artists_and_venues()
 
     data = [{
         'venue_id': venue.id,

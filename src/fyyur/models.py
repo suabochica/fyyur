@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ARRAY
 
@@ -26,6 +28,58 @@ class Venue(db.Model):
     def __repr__(self):
         return f"<Venue {self.id} {self.name}>"
 
+    def upcoming_shows_count(self):
+        now = datetime.now()
+        return Show.query.filter(
+            Show.venue_id == self.id, Show.date > now
+        ).count()
+
+    def past_shows_count(self):
+        now = datetime.now()
+        return Show.query.filter(
+            Show.venue_id == self.id, Show.date <= now
+        ).count()
+
+    def get_upcoming_shows(self):
+        now = datetime.now()
+        return (
+            db.session.query(Show, Artist)
+            .join(Artist, Show.artist_id == Artist.id)
+            .filter(Show.venue_id == self.id, Show.date > now)
+            .order_by(Show.date.asc())
+            .all()
+        )
+
+    def get_past_shows(self):
+        now = datetime.now()
+        return (
+            db.session.query(Show, Artist)
+            .join(Artist, Show.artist_id == Artist.id)
+            .filter(Show.venue_id == self.id, Show.date <= now)
+            .order_by(Show.date.desc())
+            .all()
+        )
+
+    def format_shows(self):
+        upcoming_shows = self.get_upcoming_shows()
+        past_shows = self.get_past_shows()
+        return {
+            'upcoming_shows': [{
+                'artist_id': artist.id,
+                'artist_name': artist.name,
+                'artist_image_link': artist.image_link,
+                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            } for show, artist in upcoming_shows],
+            'past_shows': [{
+                'artist_id': artist.id,
+                'artist_name': artist.name,
+                'artist_image_link': artist.image_link,
+                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            } for show, artist in past_shows],
+            'upcoming_shows_count': len(upcoming_shows),
+            'past_shows_count': len(past_shows),
+        }
+
 
 class Artist(db.Model):
     __tablename__ = "Artist"
@@ -48,6 +102,58 @@ class Artist(db.Model):
     def __repr__(self):
         return f"<Artist {self.id} {self.name}>"
 
+    def upcoming_shows_count(self):
+        now = datetime.now()
+        return Show.query.filter(
+            Show.artist_id == self.id, Show.date > now
+        ).count()
+
+    def past_shows_count(self):
+        now = datetime.now()
+        return Show.query.filter(
+            Show.artist_id == self.id, Show.date <= now
+        ).count()
+
+    def get_upcoming_shows(self):
+        now = datetime.now()
+        return (
+            db.session.query(Show, Venue)
+            .join(Venue, Show.venue_id == Venue.id)
+            .filter(Show.artist_id == self.id, Show.date > now)
+            .order_by(Show.date.asc())
+            .all()
+        )
+
+    def get_past_shows(self):
+        now = datetime.now()
+        return (
+            db.session.query(Show, Venue)
+            .join(Venue, Show.venue_id == Venue.id)
+            .filter(Show.artist_id == self.id, Show.date <= now)
+            .order_by(Show.date.desc())
+            .all()
+        )
+
+    def format_shows(self):
+        upcoming_shows = self.get_upcoming_shows()
+        past_shows = self.get_past_shows()
+        return {
+            'upcoming_shows': [{
+                'venue_id': venue.id,
+                'venue_name': venue.name,
+                'venue_image_link': venue.image_link,
+                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            } for show, venue in upcoming_shows],
+            'past_shows': [{
+                'venue_id': venue.id,
+                'venue_name': venue.name,
+                'venue_image_link': venue.image_link,
+                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            } for show, venue in past_shows],
+            'upcoming_shows_count': len(upcoming_shows),
+            'past_shows_count': len(past_shows),
+        }
+
 
 class Show(db.Model):
     __tablename__ = "Show"
@@ -62,3 +168,13 @@ class Show(db.Model):
 
     def __repr__(self):
         return f"<Show {self.id} {self.date}>"
+
+    @classmethod
+    def get_all_with_artists_and_venues(cls):
+        return (
+            db.session.query(cls, Artist, Venue)
+            .join(Artist)
+            .join(Venue)
+            .order_by(cls.date.desc())
+            .all()
+        )
