@@ -13,6 +13,7 @@ from flask import Flask, render_template, request, Response, flash, redirect, ur
 from flask_moment import Moment
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+from sqlalchemy.exc import IntegrityError
 
 from .models import db, Venue, Artist, Show
 from .forms import VenueForm, ArtistForm, ShowForm
@@ -197,10 +198,15 @@ def create_venue_submission():
             facebook_link=form.facebook_link.data,
             website=form.website_link.data,
             genres=form.genres.data,
+            seeking_talent=form.seeking_talent.data if hasattr(form, 'seeking_talent') else False,
+            seeking_description=form.seeking_description.data if hasattr(form, 'seeking_description') else '',
         )
         db.session.add(venue)
         db.session.commit()
         flash(f'Venue {venue.name} was successfully listed!')
+    except IntegrityError:
+        db.session.rollback()
+        flash('A venue with this name already exists.')
     except Exception:
         db.session.rollback()
         flash('An error occurred. Venue could not be listed.')
@@ -234,8 +240,13 @@ def edit_venue_submission(venue_id):
         venue.facebook_link = form.facebook_link.data
         venue.website = form.website_link.data
         venue.genres = form.genres.data
+        venue.seeking_talent = form.seeking_talent.data if hasattr(form, 'seeking_talent') else venue.seeking_talent
+        venue.seeking_description = form.seeking_description.data if hasattr(form, 'seeking_description') else venue.seeking_description
         db.session.commit()
         flash(f'Venue {venue.name} was successfully updated!')
+    except IntegrityError:
+        db.session.rollback()
+        flash('A venue with this name already exists.')
     except Exception:
         db.session.rollback()
         flash('An error occurred. Venue could not be updated.')
@@ -326,10 +337,15 @@ def create_artist_submission():
             facebook_link=form.facebook_link.data,
             website=form.website_link.data,
             genres=form.genres.data,
+            seeking_venue=form.seeking_venue.data if hasattr(form, 'seeking_venue') else False,
+            seeking_description=form.seeking_description.data if hasattr(form, 'seeking_description') else '',
         )
         db.session.add(artist)
         db.session.commit()
         flash(f'Artist {artist.name} was successfully listed!')
+    except IntegrityError:
+        db.session.rollback()
+        flash('An artist with this name already exists.')
     except Exception:
         db.session.rollback()
         flash('An error occurred. Artist could not be listed.')
@@ -362,8 +378,13 @@ def edit_artist_submission(artist_id):
         artist.facebook_link = form.facebook_link.data
         artist.website = form.website_link.data
         artist.genres = form.genres.data
+        artist.seeking_venue = form.seeking_venue.data if hasattr(form, 'seeking_venue') else artist.seeking_venue
+        artist.seeking_description = form.seeking_description.data if hasattr(form, 'seeking_description') else artist.seeking_description
         db.session.commit()
         flash(f'Artist {artist.name} was successfully updated!')
+    except IntegrityError:
+        db.session.rollback()
+        flash('An artist with this name already exists.')
     except Exception:
         db.session.rollback()
         flash('An error occurred. Artist could not be updated.')
