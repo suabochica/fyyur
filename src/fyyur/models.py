@@ -22,7 +22,6 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String(500))
 
-    artists = db.relationship("Artist", secondary="Show")
     shows = db.relationship("Show", backref="venues", lazy=False)
 
     def __repr__(self):
@@ -30,15 +29,11 @@ class Venue(db.Model):
 
     def upcoming_shows_count(self):
         now = datetime.now()
-        return Show.query.filter(
-            Show.venue_id == self.id, Show.date > now
-        ).count()
+        return Show.query.filter(Show.venue_id == self.id, Show.date > now).count()
 
     def past_shows_count(self):
         now = datetime.now()
-        return Show.query.filter(
-            Show.venue_id == self.id, Show.date <= now
-        ).count()
+        return Show.query.filter(Show.venue_id == self.id, Show.date <= now).count()
 
     def get_upcoming_shows(self):
         now = datetime.now()
@@ -64,20 +59,26 @@ class Venue(db.Model):
         upcoming_shows = self.get_upcoming_shows()
         past_shows = self.get_past_shows()
         return {
-            'upcoming_shows': [{
-                'artist_id': artist.id,
-                'artist_name': artist.name,
-                'artist_image_link': artist.image_link,
-                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-            } for show, artist in upcoming_shows],
-            'past_shows': [{
-                'artist_id': artist.id,
-                'artist_name': artist.name,
-                'artist_image_link': artist.image_link,
-                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-            } for show, artist in past_shows],
-            'upcoming_shows_count': len(upcoming_shows),
-            'past_shows_count': len(past_shows),
+            "upcoming_shows": [
+                {
+                    "artist_id": artist.id,
+                    "artist_name": artist.name,
+                    "artist_image_link": artist.image_link,
+                    "start_time": show.date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                }
+                for show, artist in upcoming_shows
+            ],
+            "past_shows": [
+                {
+                    "artist_id": artist.id,
+                    "artist_name": artist.name,
+                    "artist_image_link": artist.image_link,
+                    "start_time": show.date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                }
+                for show, artist in past_shows
+            ],
+            "upcoming_shows_count": len(upcoming_shows),
+            "past_shows_count": len(past_shows),
         }
 
 
@@ -97,22 +98,17 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String(500))
 
     shows = db.relationship("Show", backref="artists", lazy=False)
-    venues = db.relationship("Venue", secondary="Show")
 
     def __repr__(self):
         return f"<Artist {self.id} {self.name}>"
 
     def upcoming_shows_count(self):
         now = datetime.now()
-        return Show.query.filter(
-            Show.artist_id == self.id, Show.date > now
-        ).count()
+        return Show.query.filter(Show.artist_id == self.id, Show.date > now).count()
 
     def past_shows_count(self):
         now = datetime.now()
-        return Show.query.filter(
-            Show.artist_id == self.id, Show.date <= now
-        ).count()
+        return Show.query.filter(Show.artist_id == self.id, Show.date <= now).count()
 
     def get_upcoming_shows(self):
         now = datetime.now()
@@ -138,20 +134,26 @@ class Artist(db.Model):
         upcoming_shows = self.get_upcoming_shows()
         past_shows = self.get_past_shows()
         return {
-            'upcoming_shows': [{
-                'venue_id': venue.id,
-                'venue_name': venue.name,
-                'venue_image_link': venue.image_link,
-                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-            } for show, venue in upcoming_shows],
-            'past_shows': [{
-                'venue_id': venue.id,
-                'venue_name': venue.name,
-                'venue_image_link': venue.image_link,
-                'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-            } for show, venue in past_shows],
-            'upcoming_shows_count': len(upcoming_shows),
-            'past_shows_count': len(past_shows),
+            "upcoming_shows": [
+                {
+                    "venue_id": venue.id,
+                    "venue_name": venue.name,
+                    "venue_image_link": venue.image_link,
+                    "start_time": show.date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                }
+                for show, venue in upcoming_shows
+            ],
+            "past_shows": [
+                {
+                    "venue_id": venue.id,
+                    "venue_name": venue.name,
+                    "venue_image_link": venue.image_link,
+                    "start_time": show.date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                }
+                for show, venue in past_shows
+            ],
+            "upcoming_shows_count": len(upcoming_shows),
+            "past_shows_count": len(past_shows),
         }
 
 
