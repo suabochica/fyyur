@@ -132,6 +132,7 @@ def index():
 @app.route('/venues')
 def list_venues():
     venues = Venue.query.order_by(Venue.city, Venue.state, Venue.name).all()
+    now = datetime.now()
 
     areas = []
     area_map = {}
@@ -146,10 +147,13 @@ def list_venues():
             }
             area_map[key] = area_item
             areas.append(area_item)
+        upcoming_count = Show.query.filter(
+            Show.venue_id == venue.id, Show.date > now
+        ).count()
         area_map[key]['venues'].append({
             'id': venue.id,
             'name': venue.name,
-            'num_upcoming_shows': 0,
+            'num_upcoming_shows': upcoming_count,
         })
 
     return render_template('pages/venues.html', areas=areas)
@@ -162,10 +166,13 @@ def search_venues():
         Venue.name.ilike(f'%{search_term}%')
     ).order_by(Venue.name).all()
 
+    now = datetime.now()
     data = [{
         'id': v.id,
         'name': v.name,
-        'num_upcoming_shows': len(v.shows),
+        'num_upcoming_shows': Show.query.filter(
+            Show.venue_id == v.id, Show.date > now
+        ).count(),
     } for v in venues]
 
     return render_template(
@@ -303,10 +310,13 @@ def search_artists():
         Artist.name.ilike(f'%{search_term}%')
     ).order_by(Artist.name).all()
 
+    now = datetime.now()
     data = [{
         'id': a.id,
         'name': a.name,
-        'num_upcoming_shows': len(a.shows),
+        'num_upcoming_shows': Show.query.filter(
+            Show.artist_id == a.id, Show.date > now
+        ).count(),
     } for a in artists]
 
     return render_template(
