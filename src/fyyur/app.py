@@ -158,7 +158,7 @@ def show_venue(venue_id):
     return render_template('pages/show_venue.html', venue={
         'id': venue.id,
         'name': venue.name,
-        'genres': venue.genres.split(',') if venue.genres else [],
+        'genres': venue.genres or [],
         'address': venue.address,
         'city': venue.city,
         'state': venue.state,
@@ -196,7 +196,7 @@ def create_venue_submission():
             image_link=form.image_link.data,
             facebook_link=form.facebook_link.data,
             website=form.website_link.data,
-            genres=','.join(form.genres.data),
+            genres=form.genres.data,
         )
         db.session.add(venue)
         db.session.commit()
@@ -233,7 +233,7 @@ def edit_venue_submission(venue_id):
         venue.image_link = form.image_link.data
         venue.facebook_link = form.facebook_link.data
         venue.website = form.website_link.data
-        venue.genres = ','.join(form.genres.data)
+        venue.genres = form.genres.data
         db.session.commit()
         flash(f'Venue {venue.name} was successfully updated!')
     except Exception:
@@ -289,7 +289,7 @@ def show_artist(artist_id):
     return render_template('pages/show_artist.html', artist={
         'id': artist.id,
         'name': artist.name,
-        'genres': artist.genres.split(',') if artist.genres else [],
+        'genres': artist.genres or [],
         'city': artist.city,
         'state': artist.state,
         'phone': artist.phone,
@@ -325,7 +325,7 @@ def create_artist_submission():
             image_link=form.image_link.data,
             facebook_link=form.facebook_link.data,
             website=form.website_link.data,
-            genres=','.join(form.genres.data),
+            genres=form.genres.data,
         )
         db.session.add(artist)
         db.session.commit()
@@ -361,7 +361,7 @@ def edit_artist_submission(artist_id):
         artist.image_link = form.image_link.data
         artist.facebook_link = form.facebook_link.data
         artist.website = form.website_link.data
-        artist.genres = ','.join(form.genres.data)
+        artist.genres = form.genres.data
         db.session.commit()
         flash(f'Artist {artist.name} was successfully updated!')
     except Exception:

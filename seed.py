@@ -44,7 +44,7 @@ artists = [
         image_link='https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80',
         facebook_link='https://www.facebook.com/GunsNPetals',
         website='https://www.gunsnpetalsband.com',
-        genres='Rock n Roll',
+        genres=['Rock n Roll'],
     ),
     Artist(
         name='Matt Quevedo',
@@ -53,7 +53,7 @@ artists = [
         phone='300-400-5000',
         image_link='https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80',
         facebook_link='https://www.facebook.com/mattquevedo923251523',
-        genres='Jazz',
+        genres=['Jazz'],
     ),
     Artist(
         name='The Wild Sax Band',
@@ -61,7 +61,7 @@ artists = [
         state='CA',
         phone='432-325-5432',
         image_link='https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80',
-        genres='Jazz,Classical',
+        genres=['Jazz', 'Classical'],
     ),
 ]
 
