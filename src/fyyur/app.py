@@ -47,51 +47,75 @@ app.jinja_env.filters['datetime'] = format_datetime
 # Helper functions.
 #----------------------------------------------------------------------------#
 
-def format_venue_shows(venue):
-    upcoming_shows = []
-    past_shows = []
+def format_venue_shows(venue_id):
     now = datetime.now()
 
-    for show in venue.shows:
-        show_data = {
-            'artist_id': show.artist_id,
-            'artist_name': show.artist.name,
-            'artist_image_link': show.artist.image_link,
-            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-        }
-        if show.date > now:
-            upcoming_shows.append(show_data)
-        else:
-            past_shows.append(show_data)
+    upcoming_shows = (
+        db.session.query(Show, Artist)
+        .join(Artist, Show.artist_id == Artist.id)
+        .filter(Show.venue_id == venue_id, Show.date > now)
+        .order_by(Show.date.asc())
+        .all()
+    )
+
+    past_shows = (
+        db.session.query(Show, Artist)
+        .join(Artist, Show.artist_id == Artist.id)
+        .filter(Show.venue_id == venue_id, Show.date <= now)
+        .order_by(Show.date.desc())
+        .all()
+    )
 
     return {
-        'upcoming_shows': upcoming_shows,
-        'past_shows': past_shows,
+        'upcoming_shows': [{
+            'artist_id': artist.id,
+            'artist_name': artist.name,
+            'artist_image_link': artist.image_link,
+            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        } for show, artist in upcoming_shows],
+        'past_shows': [{
+            'artist_id': artist.id,
+            'artist_name': artist.name,
+            'artist_image_link': artist.image_link,
+            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        } for show, artist in past_shows],
         'upcoming_shows_count': len(upcoming_shows),
         'past_shows_count': len(past_shows),
     }
 
 
-def format_artist_shows(artist):
-    upcoming_shows = []
-    past_shows = []
+def format_artist_shows(artist_id):
     now = datetime.now()
 
-    for show in artist.shows:
-        show_data = {
-            'venue_id': show.venue_id,
-            'venue_name': show.venue.name,
-            'venue_image_link': show.venue.image_link,
-            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-        }
-        if show.date > now:
-            upcoming_shows.append(show_data)
-        else:
-            past_shows.append(show_data)
+    upcoming_shows = (
+        db.session.query(Show, Venue)
+        .join(Venue, Show.venue_id == Venue.id)
+        .filter(Show.artist_id == artist_id, Show.date > now)
+        .order_by(Show.date.asc())
+        .all()
+    )
+
+    past_shows = (
+        db.session.query(Show, Venue)
+        .join(Venue, Show.venue_id == Venue.id)
+        .filter(Show.artist_id == artist_id, Show.date <= now)
+        .order_by(Show.date.desc())
+        .all()
+    )
 
     return {
-        'upcoming_shows': upcoming_shows,
-        'past_shows': past_shows,
+        'upcoming_shows': [{
+            'venue_id': venue.id,
+            'venue_name': venue.name,
+            'venue_image_link': venue.image_link,
+            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        } for show, venue in upcoming_shows],
+        'past_shows': [{
+            'venue_id': venue.id,
+            'venue_name': venue.name,
+            'venue_image_link': venue.image_link,
+            'start_time': show.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        } for show, venue in past_shows],
         'upcoming_shows_count': len(upcoming_shows),
         'past_shows_count': len(past_shows),
     }
@@ -154,7 +178,7 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
     venue = Venue.query.get_or_404(venue_id)
-    shows_data = format_venue_shows(venue)
+    shows_data = format_venue_shows(venue_id)
 
     return render_template('pages/show_venue.html', venue={
         'id': venue.id,
@@ -295,7 +319,7 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
     artist = Artist.query.get_or_404(artist_id)
-    shows_data = format_artist_shows(artist)
+    shows_data = format_artist_shows(artist_id)
 
     return render_template('pages/show_artist.html', artist={
         'id': artist.id,
