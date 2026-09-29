@@ -22,14 +22,16 @@ def upgrade():
         batch_op.alter_column('genres',
                existing_type=sa.String(length=120),
                type_=sa.ARRAY(sa.String()),
-               existing_nullable=True)
+               existing_nullable=True,
+               postgresql_using="CASE WHEN genres = '' THEN ARRAY[]::varchar[] ELSE string_to_array(genres, ',') END")
 
     # Change genres column from String to ARRAY(String) on Artist
     with op.batch_alter_table('Artist', schema=None) as batch_op:
         batch_op.alter_column('genres',
                existing_type=sa.String(length=120),
                type_=sa.ARRAY(sa.String()),
-               existing_nullable=True)
+               existing_nullable=True,
+               postgresql_using="CASE WHEN genres = '' THEN ARRAY[]::varchar[] ELSE string_to_array(genres, ',') END")
 
 
 def downgrade():
